@@ -1,52 +1,61 @@
 :root {
-    --bg-color: #0f172a;
-    --glass-bg: rgba(255, 255, 255, 0.05);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --accent: #3b82f6;
+    --bg-color: #0B0F19;
+    --glass-bg: rgba(255, 255, 255, 0.02);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --accent: #475569;
+    --accent-hover: #64748b;
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
+    --text-muted: #64748b;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 body {
     background-color: var(--bg-color);
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
-    background-attachment: fixed;
     color: var(--text-primary);
     min-height: 100vh;
+    font-weight: 300;
 }
 
 .app-container {
     display: flex;
     min-height: 100vh;
-    padding: 2rem;
-    gap: 2rem;
+    padding: 2.5rem;
+    gap: 2.5rem;
+    max-width: 1600px;
+    margin: 0 auto;
 }
 
-/* Glassmorphism utility */
 .glass-panel {
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
-    border-radius: 16px;
+    border-radius: 8px;
     padding: 1.5rem;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar {
-    width: 320px;
+    width: 300px;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+}
+
+.sidebar h2 {
+    font-weight: 400;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 0.75rem;
 }
 
 .input-group {
@@ -56,48 +65,65 @@ body {
 }
 
 .input-group label {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
-    font-weight: 600;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-input, select {
+input, select, textarea {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--glass-border);
-    border-radius: 8px;
-    padding: 0.75rem;
+    border-radius: 4px;
+    padding: 0.65rem;
     color: var(--text-primary);
-    font-size: 1rem;
-    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
 }
 
-input:focus, select:focus {
+input:focus, select:focus, textarea:focus {
     outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    border-color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .glow-btn {
-    background: linear-gradient(135deg, var(--accent), #8b5cf6);
-    color: white;
-    border: none;
-    border-radius: 8px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    border-radius: 4px;
     padding: 0.75rem;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.glow-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+.glow-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .glow-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
+}
+
+.icon-btn {
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0 10px;
+    transition: all 0.2s;
+}
+
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .main-content {
@@ -107,15 +133,23 @@ input:focus, select:focus {
     gap: 2rem;
 }
 
+header h1 {
+    font-weight: 300;
+    font-size: 1.8rem;
+    letter-spacing: -0.02em;
+}
+
 .subtitle {
     color: var(--text-secondary);
-    font-size: 1.2rem;
-    margin-top: 0.5rem;
+    font-size: 1rem;
+    margin-top: 0.25rem;
+    font-weight: 300;
 }
 
 .query-section {
     display: flex;
     gap: 1rem;
+    padding: 1.25rem;
 }
 
 .query-section input {
@@ -123,30 +157,36 @@ input:focus, select:focus {
 }
 
 .run-btn {
-    width: 150px;
+    width: 140px;
 }
 
 .results-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
+    animation: fadeIn 0.4s ease-out;
 }
 
-/* Loader */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .loader {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
-    padding: 3rem;
+    gap: 1.5rem;
+    padding: 4rem;
+    color: var(--text-secondary);
 }
 
 .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid var(--glass-border);
-    border-top: 4px solid var(--accent);
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--glass-border);
+    border-top: 2px solid var(--text-secondary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -156,73 +196,117 @@ input:focus, select:focus {
     100% { transform: rotate(360deg); }
 }
 
-/* Flowchart Styles */
 .flowchart {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1rem;
     margin-bottom: 2rem;
 }
 
 .flow-step {
-    background: rgba(0,0,0,0.3);
+    background: transparent;
     border: 1px solid var(--glass-border);
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    font-weight: 600;
-    color: var(--text-secondary);
+    padding: 0.75rem 2rem;
+    border-radius: 4px;
+    font-weight: 400;
+    color: var(--text-muted);
     transition: all 0.3s ease;
-    width: 300px;
+    width: 320px;
     text-align: center;
+    font-size: 0.9rem;
 }
 
 .flow-arrow {
-    color: var(--text-secondary);
-    font-size: 1.5rem;
+    color: var(--glass-border);
+    font-size: 1.2rem;
 }
 
 .active-step {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
-    border-color: var(--accent);
-    color: white;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-    transform: scale(1.05);
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.03);
 }
 
 .logs p {
     margin-bottom: 0.5rem;
-    color: #cbd5e1;
+    color: var(--text-secondary);
+    font-family: monospace;
+    font-size: 0.85rem;
 }
 
 details {
     margin-top: 1rem;
-    background: rgba(0,0,0,0.2);
-    padding: 1rem;
-    border-radius: 8px;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 1rem;
+}
+
+summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    list-style: none;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+summary:hover {
+    color: var(--text-primary);
 }
 
 pre {
     margin-top: 1rem;
     white-space: pre-wrap;
-    font-size: 0.85rem;
-    color: #a7f3d0;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: rgba(0,0,0,0.3);
+    padding: 1rem;
+    border-radius: 4px;
+    border: 1px solid var(--glass-border);
 }
 
 .rag-details pre {
-    color: #fde047;
+    color: #e2e8f0;
 }
 
 .story-content {
-    line-height: 1.6;
+    line-height: 1.7;
     margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    color: #e2e8f0;
+}
+.story-content p {
+    margin-bottom: 1rem;
+}
+
+.story-content strong {
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 .telemetry {
     font-family: monospace;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--glass-border);
+    padding-top: 1rem;
+    margin-top: 1.5rem;
+}
+
+.feedback-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--glass-border);
+}
+
+.feedback-section h4 {
+    font-weight: 400;
     color: var(--text-secondary);
-    background: rgba(0,0,0,0.2);
-    padding: 0.75rem;
-    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
 }

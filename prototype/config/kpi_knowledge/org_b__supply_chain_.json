@@ -1,0 +1,180 @@
+{
+  "org_id": "Org B (Supply Chain)",
+  "kpis": [
+    {
+      "name": "Minimum Average Price Change Percentage",
+      "type": "derived",
+      "definition": "Percentage change in the minimum average price compared to the previous period",
+      "formula": "(avg_price_min - LAG(avg_price_min)) / LAG(avg_price_min)",
+      "numerator": null,
+      "denominator": null,
+      "source_columns": [
+        "avg_price_min",
+        "date"
+      ],
+      "aggregation": null,
+      "dimensions": [
+        "date"
+      ],
+      "drivers": [
+        {
+          "column": "avg_price_max",
+          "reason": "Maximum price changes may influence minimum price adjustments",
+          "expected_relationship": "negative",
+          "priority": 1
+        },
+        {
+          "column": "modal_price",
+          "reason": "Modal price shifts can indicate overall pricing strategy changes affecting minimum price",
+          "expected_relationship": "negative",
+          "priority": 1
+        },
+        {
+          "column": "total_quantity",
+          "reason": "Volume changes can drive price adjustments",
+          "expected_relationship": "negative",
+          "priority": 1
+        }
+      ],
+      "time_column": "date",
+      "unit": "%",
+      "direction": "lower_is_better",
+      "thresholds": {
+        "material_drop_percentage": 0.1,
+        "alert_threshold": null,
+        "target_value": null
+      },
+      "lineage": {
+        "source_tables": [],
+        "transformation": null,
+        "created_by": "auto",
+        "last_updated": "2026-08-30T17:48:31.042312"
+      },
+      "confidence": 0.8,
+      "organization_id": "Org B (Supply Chain)",
+      "schema_version": "1.0",
+      "assumptions": [
+        "Assumes monthly data",
+        "Assumes previous period is one month before"
+      ],
+      "clarification_required": false,
+      "clarification_question": null,
+      "last_updated": "2026-08-30T17:48:31.044420"
+    },
+    {
+      "name": "Supply Chain Volume Drop Percentage",
+      "type": "derived",
+      "definition": "Percentage change in total supply chain volume (total_quantity) compared to the previous period",
+      "formula": "(SUM(total_quantity) - LAG(SUM(total_quantity))) / LAG(SUM(total_quantity))",
+      "numerator": null,
+      "denominator": null,
+      "source_columns": [
+        "total_quantity",
+        "date"
+      ],
+      "aggregation": null,
+      "dimensions": [
+        "date"
+      ],
+      "drivers": [
+        {
+          "column": "avg_price_min",
+          "reason": "Lower minimum prices may reduce volume if customers shift to cheaper alternatives",
+          "expected_relationship": "negative",
+          "priority": 1
+        },
+        {
+          "column": "avg_price_max",
+          "reason": "Higher maximum prices may deter high-end demand, reducing volume",
+          "expected_relationship": "negative",
+          "priority": 1
+        },
+        {
+          "column": "modal_price",
+          "reason": "Changes in modal price can indicate overall pricing strategy shifts affecting volume",
+          "expected_relationship": "negative",
+          "priority": 1
+        }
+      ],
+      "time_column": "date",
+      "unit": "%",
+      "direction": "lower_is_better",
+      "thresholds": {
+        "material_drop_percentage": 0.1,
+        "alert_threshold": null,
+        "target_value": null
+      },
+      "lineage": {
+        "source_tables": [],
+        "transformation": null,
+        "created_by": "auto",
+        "last_updated": "2026-08-30T18:07:54.486827"
+      },
+      "confidence": 0.85,
+      "organization_id": "Org B (Supply Chain)",
+      "schema_version": "1.0",
+      "assumptions": [
+        "Assumes monthly data",
+        "Assumes previous period is one month before"
+      ],
+      "clarification_required": false,
+      "clarification_question": null,
+      "last_updated": "2026-08-30T18:07:54.489014"
+    },
+    {
+      "name": "Price Spread (Max - Min)",
+      "type": "derived",
+      "definition": "Difference between maximum and minimum average prices for each period, indicating price volatility.",
+      "formula": "avg_price_max - avg_price_min",
+      "numerator": null,
+      "denominator": null,
+      "source_columns": [
+        "avg_price_max",
+        "avg_price_min"
+      ],
+      "aggregation": null,
+      "dimensions": [
+        "date"
+      ],
+      "drivers": [
+        {
+          "column": "modal_price",
+          "reason": "Modal price shifts can indicate overall pricing strategy changes affecting price spread",
+          "expected_relationship": "positive",
+          "priority": 1
+        },
+        {
+          "column": "total_quantity",
+          "reason": "Volume changes can influence price spread",
+          "expected_relationship": "negative",
+          "priority": 1
+        }
+      ],
+      "time_column": "date",
+      "unit": "units",
+      "direction": "lower_is_better",
+      "thresholds": {
+        "material_drop_percentage": 0.1,
+        "alert_threshold": null,
+        "target_value": null
+      },
+      "lineage": {
+        "source_tables": [],
+        "transformation": null,
+        "created_by": "auto",
+        "last_updated": "2026-08-30T18:14:12.918680"
+      },
+      "confidence": 0.8,
+      "organization_id": "Org B (Supply Chain)",
+      "schema_version": "1.0",
+      "assumptions": [
+        "Assumes monthly data",
+        "Assumes price columns are accurate"
+      ],
+      "clarification_required": false,
+      "clarification_question": null,
+      "last_updated": "2026-08-30T18:14:12.920077"
+    }
+  ],
+  "schema_version": "1.0"
+}
