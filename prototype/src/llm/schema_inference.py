@@ -1,65 +1,63 @@
-import time
-import json
-import re
-from typing import Dict, Any, Tuple
+"""
+Thin backward-compatibility wrapper.
+
+The real logic now lives in:
+  src/kpi/introspector.py  → SchemaIntrospector
+  src/kpi/schema_mapper.py → SchemaMapper
+
+This module exposes the old SchemaInferenceLLM interface so that any
+remaining callers do not break.  main.py now uses SchemaMapper directly.
+"""
+from __future__ import annotations
+from typing import Dict, Any, Tuple, Optional, List
+import json, re
+
 # pyrefly: ignore [missing-import]
 from langchain_groq import ChatGroq
-# pyrefly: ignore [missing-import]
-from langchain_core.prompts import PromptTemplate
+
+from src.kpi.schema_mapper import SchemaMapper
+from src.kpi.introspector import SchemaIntrospector
+from src.kpi.models import EnhancedKPI, SchemaMetadata
+import pandas as pd
+
 
 class SchemaInferenceLLM:
+    """
+    Backward-compatible wrapper around SchemaMapper + SchemaIntrospector.
+    When main.py calls schema_mapper(query, db_schema_dict), this converts
+    the old dict format and returns (legacy_dict, {}).
+    """
     def __init__(self, api_key: str, model_name: str):
-        self.llm = ChatGroq(
-            api_key=api_key,
-            model_name=model_name, 
-            temperature=0.2
-        )
+        self._mapper = SchemaMapper(api_key, model_name)
         self.active_model = model_name
 
-    def schema_mapper(self, user_query: str, db_schema: Dict[str, str]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        """Maps user intent and raw schema to KPI and drivers dynamically using Zero-Shot LLM reasoning."""
-        
-        prompt = PromptTemplate(
-            input_variables=["query", "schema"],
-            template='''
-            You are an expert Data Architect and Business Intelligence Analyst.
-            User Query: {query}
-            
-            The database returned the following schema (columns and data types):
-            {schema}
-            
-            Analyze the schema and the user's intent. Determine:
-            1. Which column represents the primary KPI the user wants to analyze?
-            2. Which columns are the causal drivers (features) that impact this KPI? Do not include the KPI itself or any 'date', 'id', or purely structural columns.
-            
-            Output ONLY a valid JSON object in this exact format:
-            {{
-                "kpi": "column_name",
-                "drivers": ["driver1", "driver2", "driver3"]
-            }}
-            '''
+    def schema_mapper(
+        self, user_query: str, db_schema: Dict[str, str]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """Legacy interface — kept for any remaining callers."""
+        # Convert simple dtype dict back to a minimal SchemaMetadata
+        from src.kpi.models import SchemaColumnMeta, SchemaMetadata
+        cols = []
+        for col_name, dtype in db_schema.items():
+            is_numeric = any(t in dtype for t in ["int", "float"])
+            is_datetime = "datetime" in dtype or "date" in dtype
+            cols.append(SchemaColumnMeta(
+                name=col_name,
+                dtype=dtype,
+                is_numeric=is_numeric,
+                is_datetime=is_datetime,
+            ))
+        meta = SchemaMetadata(
+            total_rows=0,
+            total_columns=len(cols),
+            columns=cols,
         )
-        
-        chain = prompt | self.llm
-        response = chain.invoke({
-            "query": user_query,
-            "schema": json.dumps(db_schema, indent=2)
-        })
-        
-        content = response.content.strip()
-        # Remove thinking blocks from models like DeepSeek-R1
-        content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
-        
-        # Extract everything from the first { to the last }
-        start_idx = content.find('{')
-        end_idx = content.rfind('}')
-        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-            content = content[start_idx:end_idx+1]
-            
         try:
-            mapping = json.loads(content)
-        except json.JSONDecodeError:
-            raise ValueError(f"LLM failed to return valid JSON. Output: {content}")
-            
-        # Return empty dict for retrieved context since we no longer use RAG
-        return mapping, {}
+            kpi = self._mapper.map(user_query, meta)
+            legacy = {
+                "kpi": kpi.source_columns[0] if kpi.source_columns else "",
+                "drivers": kpi.driver_columns(),
+            }
+            return legacy, {}
+        except Exception as e:
+            raise ValueError(str(e))

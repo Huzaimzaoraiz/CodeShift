@@ -6,6 +6,12 @@ fastapi
 uvicorn
 langchain-groq
 langchain
+langgraph
 python-dotenv
 SQLAlchemy
 psycopg2-binary
+pydantic>=2.0
+PyJWT
+groq
+pytest
+pytest-asyncio

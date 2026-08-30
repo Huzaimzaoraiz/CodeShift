@@ -1,0 +1,315 @@
+{
+  "org_id": "Org A (Telecommunications)",
+  "kpis": [
+    {
+      "name": "Customer Churn Rate",
+      "type": "rate",
+      "definition": "The percentage of customers who have churned (churn_status = 1) out of the total customer base.",
+      "formula": "SUM(churn_status) / COUNT(*) * 100",
+      "numerator": {
+        "method": "conditional_count",
+        "column": "churn_status",
+        "condition": {
+          "column": "churn_status",
+          "operator": "==",
+          "value": 1
+        }
+      },
+      "denominator": {
+        "method": "count",
+        "column": "churn_status",
+        "condition": null
+      },
+      "source_columns": [
+        "churn_status"
+      ],
+      "aggregation": null,
+      "dimensions": [],
+      "drivers": [
+        {
+          "column": "tenure_months",
+          "reason": "Customer tenure is a strong predictor of churn; typically, shorter tenure correlates with higher churn risk.",
+          "expected_relationship": "negative",
+          "priority": 1
+        }
+      ],
+      "time_column": null,
+      "unit": "%",
+      "direction": "lower_is_better",
+      "thresholds": {
+        "material_drop_percentage": 0.1,
+        "alert_threshold": null,
+        "target_value": null
+      },
+      "lineage": {
+        "source_tables": [],
+        "transformation": null,
+        "created_by": "auto",
+        "last_updated": "2026-08-30T17:53:35.936758"
+      },
+      "confidence": 0.95,
+      "organization_id": "Org A (Telecommunications)",
+      "schema_version": "1.0",
+      "assumptions": [
+        "churn_status is a binary indicator where 1 represents churned customers and 0 represents active customers.",
+        "The dataset represents a snapshot of the customer base at a specific point in time, so 'tenure_months' is treated as a static attribute rather than a time series index for this specific KPI calculation."
+      ],
+      "clarification_required": false,
+      "clarification_question": null,
+      "last_updated": "2026-08-30T17:53:35.938771"
+    },
+    {
+      "name": "Churn Rate by Contract Type",
+      "type": "rate",
+      "definition": "The percentage of customers who have churned (churn_status = 1) within each contract type (One year or Two year).",
+      "formula": "SUM(churn_status) / COUNT(*) * 100",
+      "numerator": {
+        "method": "conditional_count",
+        "column": "churn_status",
+        "condition": {
+          "column": "churn_status",
+          "operator": "==",
+          "value": 1
+        }
+      },
+      "denominator": {
+        "method": "count",
+        "column": "churn_status",
+        "condition": null
+      },
+      "source_columns": [
+        "churn_status",
+        "Contract_One year",
+        "Contract_Two year"
+      ],
+      "aggregation": null,
+      "dimensions": [
+        "Contract_One year",
+        "Contract_Two year"
+      ],
+      "drivers": [
+        {
+          "column": "tenure_months",
+          "reason": "Customer tenure is a strong predictor of churn; typically, shorter tenure correlates with higher churn risk.",
+          "expected_relationship": "negative",
+          "priority": 1
+        },
+        {
+          "column": "MonthlyCharges",
+          "reason": "Higher monthly charges may increase churn risk due to perceived cost burden.",
+          "expected_relationship": "positive",
+          "priority": 2
+        }
+      ],
+      "time_column": null,
+      "unit": "%",
+      "direction": "lower_is_better",
+      "thresholds": {
+        "material_drop_percentage": 0.1,
+        "alert_threshold": null,
+        "target_value": null
+      },
+      "lineage": {
+        "source_tables": [],
+        "transformation": null,
+        "created_by": "auto",
+        "last_updated": "2026-08-30T17:58:30.405186"
+      },
+      "confidence": 0.9,
+      "organization_id": "Org A (Telecommunications)",
+      "schema_version": "1.0",
+      "assumptions": [
+        "churn_status is a binary indicator where 1 represents churned customers.",
+        "Contract_One year and Contract_Two year are mutually exclusive booleans indicating contract type.",
+        "The dataset represents a snapshot of the customer base at a specific point in time."
+      ],
+      "clarification_required": false,
+      "clarification_question": null,
+      "last_updated": "2026-08-30T17:58:30.407589"
+    },
+    {
+      "name": "Revenue Health Score",
+      "type": "derived",
+      "definition": "A composite indicator of business health calculated as the average monthly revenue per customer multiplied by the proportion of customers that remain (1 - churn rate). It reflects both revenue generation and customer retention.",
+      "formula": "MEAN(MonthlyCharges) * (1 - (SUM(churn_status) / COUNT(*)))",
+      "numerator": null,
+      "denominator": null,
+      "source_columns": [
+        "MonthlyCharges",
+        "churn_status"
+      ],
+      "aggregation": null,
+      "dimensions": [],
+      "drivers": [
+        {
+          "column": "MonthlyCharges",
+          "reason": "Higher average monthly charges increase the revenue component of the score.",
+          "expected_relationship": "positive",
+          "priority": 1
+        },
+        {
+          "column": "churn_status",
+          "reason": "Higher churn reduces the retained\u2011customer proportion, lowering the score.",
+          "expected_relationship": "negative",
+          "priority": 2
+        },
+        {
+          "column": "tenure_months",
+          "reason": "Longer tenure often correlates with higher lifetime value and lower churn risk.",
+          "expected_relationship": "positive",
+          "priority": 3
+        }
+      ],
+      "time_column": null,
+      "unit": "$",
+      "direction": "higher_is_better",
+      "thresholds": {
+        "material_drop_percentage": 0.1,
+        "alert_threshold": null,
+        "target_value": null
+      },
+      "lineage": {
+        "source_tables": [],
+        "transformation": null,
+        "created_by": "auto",
+        "last_updated": "2026-08-30T18:10:34.933689"
+      },
+      "confidence": 0.85,
+      "organization_id": "Org A (Telecommunications)",
+      "schema_version": "1.0",
+      "assumptions": [
+        "MonthlyCharges represents the average monthly revenue per customer in the current period.",
+        "churn_status is a binary flag where 1 indicates a customer has churned.",
+        "The dataset is a snapshot; there is no temporal dimension for this KPI."
+      ],
+      "clarification_required": false,
+      "clarification_question": null,
+      "last_updated": "2026-08-30T18:10:34.935386"
+    },
+    {
+      "name": "Core Business Health Index",
+      "type": "derived",
+      "definition": "A composite metric representing the average lifetime value of a customer, calculated as the mean of TotalCharges. This serves as a proxy for core business health by combining revenue generation (TotalCharges) with retention (implied by the existence of charges over tenure). Anomalies in this metric indicate shifts in customer value or churn patterns.",
+      "formula": "MEAN(TotalCharges)",
+      "numerator": null,
+      "denominator": null,
+      "source_columns": [
+        "TotalCharges"
+      ],
+      "aggregation": {
+        "method": "mean",
+        "column": "TotalCharges",
+        "condition": null
+      },
+      "dimensions": [],
+      "drivers": [
+        {
+          "column": "tenure_months",
+          "reason": "Longer tenure generally leads to higher total charges, directly increasing the average lifetime value.",
+          "expected_relationship": "positive",
+          "priority": 1
+        },
+        {
+          "column": "MonthlyCharges",
+          "reason": "Higher monthly charges contribute to higher total charges, assuming similar tenure.",
+          "expected_relationship": "positive",
+          "priority": 2
+        },
+        {
+          "column": "churn_status",
+          "reason": "Churned customers typically have lower total charges compared to long-term active customers, pulling down the mean.",
+          "expected_relationship": "negative",
+          "priority": 3
+        }
+      ],
+      "time_column": null,
+      "unit": "$",
+      "direction": "higher_is_better",
+      "thresholds": {
+        "material_drop_percentage": 0.1,
+        "alert_threshold": null,
+        "target_value": null
+      },
+      "lineage": {
+        "source_tables": [],
+        "transformation": null,
+        "created_by": "auto",
+        "last_updated": "2026-08-30T18:11:01.224465"
+      },
+      "confidence": 0.85,
+      "organization_id": "Org A (Telecommunications)",
+      "schema_version": "1.0",
+      "assumptions": [
+        "TotalCharges represents the cumulative revenue generated from a customer.",
+        "The dataset is a snapshot, so 'time_column' is null.",
+        "Anomalies in the mean TotalCharges indicate shifts in the customer base composition (e.g., more short-term or churned customers) or pricing changes."
+      ],
+      "clarification_required": false,
+      "clarification_question": null,
+      "last_updated": "2026-08-30T18:11:01.225782"
+    },
+    {
+      "name": "Core Business Health & Anomaly Index",
+      "type": "derived",
+      "definition": "A composite metric representing the average lifetime value of a customer, calculated as the mean of TotalCharges. This serves as a proxy for core business health by combining revenue generation (TotalCharges) with retention (implied by the existence of charges over tenure). Anomalies in this metric indicate shifts in customer value or churn patterns.",
+      "formula": "MEAN(TotalCharges)",
+      "numerator": null,
+      "denominator": null,
+      "source_columns": [
+        "TotalCharges"
+      ],
+      "aggregation": {
+        "method": "mean",
+        "column": "TotalCharges",
+        "condition": null
+      },
+      "dimensions": [],
+      "drivers": [
+        {
+          "column": "tenure_months",
+          "reason": "Longer tenure generally leads to higher total charges, directly increasing the average lifetime value.",
+          "expected_relationship": "positive",
+          "priority": 1
+        },
+        {
+          "column": "MonthlyCharges",
+          "reason": "Higher monthly charges contribute to higher total charges, assuming similar tenure.",
+          "expected_relationship": "positive",
+          "priority": 2
+        },
+        {
+          "column": "churn_status",
+          "reason": "Churned customers typically have lower total charges compared to long-term active customers, pulling down the mean.",
+          "expected_relationship": "negative",
+          "priority": 3
+        }
+      ],
+      "time_column": null,
+      "unit": "$",
+      "direction": "higher_is_better",
+      "thresholds": {
+        "material_drop_percentage": 0.1,
+        "alert_threshold": null,
+        "target_value": null
+      },
+      "lineage": {
+        "source_tables": [],
+        "transformation": null,
+        "created_by": "auto",
+        "last_updated": "2026-08-30T18:19:28.122415"
+      },
+      "confidence": 0.85,
+      "organization_id": "Org A (Telecommunications)",
+      "schema_version": "1.0",
+      "assumptions": [
+        "TotalCharges represents the cumulative revenue generated from a customer.",
+        "The dataset is a snapshot, so 'time_column' is null.",
+        "Anomalies in the mean TotalCharges indicate shifts in the customer base composition (e.g., more short-term or churned customers) or pricing changes."
+      ],
+      "clarification_required": false,
+      "clarification_question": null,
+      "last_updated": "2026-08-30T18:19:28.124950"
+    }
+  ],
+  "schema_version": "1.0"
+}
