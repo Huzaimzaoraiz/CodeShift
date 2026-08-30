@@ -15,7 +15,7 @@ def setup_servers():
         df_telco['Churn'] = df_telco['Churn'].map({'Yes': 1, 'No': 0})
         
         print("Pushing data to Org A PostgreSQL Server...")
-        engine_a = create_engine('postgresql://admin:password@localhost:5432/org_a_telco')
+        engine_a = create_engine('postgresql://admin:password@localhost:5434/org_a_telco')
         df_telco.to_sql('customer_churn', engine_a, if_exists='replace', index=False)
         print("✅ Org A PostgreSQL database populated successfully.")
     except Exception as e:
