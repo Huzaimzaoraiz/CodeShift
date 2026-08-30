@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres_org_a:
     image: postgres:15
