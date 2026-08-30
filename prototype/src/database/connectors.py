@@ -1,51 +1,63 @@
+import json
+import os
 import pandas as pd
 from sqlalchemy import create_engine
+from typing import Dict, List
+
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), '../../config/databases.json')
 
 class DBConnector:
     """
-    DB Connector Layer: Connects to isolated PostgreSQL servers based on Organization.
+    DB Connector Layer: Connects to isolated PostgreSQL servers based on Organization dynamically.
     """
     def __init__(self):
-        self.engine_a = create_engine('postgresql://admin:password@localhost:5434/org_a_telco')
-        self.engine_b = create_engine('postgresql://admin:password@localhost:5433/org_b_supply')
+        self.engines = {}
+        self.configs = {}
+        self.load_configs()
+
+    def load_configs(self):
+        if os.path.exists(CONFIG_PATH):
+            with open(CONFIG_PATH, 'r') as f:
+                self.configs = json.load(f)
+                
+            for org_id, config in self.configs.items():
+                try:
+                    self.engines[org_id] = create_engine(config["connection_string"])
+                except Exception as e:
+                    print(f"Failed to initialize engine for {org_id}: {e}")
+
+    def list_databases(self) -> List[str]:
+        return list(self.configs.keys())
+
+    def add_database(self, org_id: str, connection_string: str, query: str):
+        self.configs[org_id] = {
+            "connection_string": connection_string,
+            "query": query,
+            "post_processing": "none"
+        }
+        self.engines[org_id] = create_engine(connection_string)
         
+        # Persist to disk
+        with open(CONFIG_PATH, 'w') as f:
+            json.dump(self.configs, f, indent=4)
+            
     def fetch_org_data(self, org_id: str) -> pd.DataFrame:
-        if org_id == "Org A (Telecommunications)":
-            query = """
-            SELECT 
-                "MonthlyCharges",
-                "TotalCharges",
-                "tenure" as tenure_months,
-                "Churn" as churn_status,
-                "Contract"
-            FROM customer_churn
-            WHERE "TotalCharges" IS NOT NULL
-            """
-            try:
-                df = pd.read_sql_query(query, self.engine_a)
-                df = pd.get_dummies(df, columns=['Contract'], drop_first=True)
-                return df
-            except Exception as e:
-                raise ConnectionError(f"Failed to connect to Org A (Telco) Server: {e}")
+        if org_id not in self.configs:
+            raise ValueError(f"Unknown Organization: {org_id}")
             
-        elif org_id == "Org B (Supply Chain)":
-            query = """
-            SELECT 
-                date,
-                SUM(quantity) as total_quantity,
-                AVG("priceMin") as avg_price_min,
-                AVG("priceMax") as avg_price_max,
-                AVG("priceMod") as modal_price
-            FROM wholesale_supply
-            WHERE date IS NOT NULL
-            GROUP BY date
-            ORDER BY date
-            """
-            try:
-                df = pd.read_sql_query(query, self.engine_b)
-                return df
-            except Exception as e:
-                raise ConnectionError(f"Failed to connect to Org B (Supply Chain) Server: {e}")
+        config = self.configs[org_id]
+        engine = self.engines.get(org_id)
+        
+        if not engine:
+            raise ConnectionError(f"Engine not initialized for {org_id}")
             
-        else:
-            raise ValueError("Unknown Organization")
+        try:
+            df = pd.read_sql_query(config["query"], engine)
+            
+            if config.get("post_processing") == "dummies_contract":
+                if 'Contract' in df.columns:
+                    df = pd.get_dummies(df, columns=['Contract'], drop_first=True)
+                    
+            return df
+        except Exception as e:
+            raise ConnectionError(f"Failed to fetch data for {org_id}: {e}")

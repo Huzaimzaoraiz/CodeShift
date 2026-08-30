@@ -23,6 +23,19 @@ services:
     volumes:
       - org_b_data:/var/lib/postgresql/data
 
+  postgres_org_c:
+    image: postgres:15
+    container_name: postgres_org_c
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: org_c_superstore
+    ports:
+      - "5435:5432"
+    volumes:
+      - org_c_data:/var/lib/postgresql/data
+
 volumes:
   org_a_data:
   org_b_data:
+  org_c_data:

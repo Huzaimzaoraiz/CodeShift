@@ -1,0 +1,17 @@
+{
+    "Org A (Telecommunications)": {
+        "connection_string": "postgresql://admin:password@localhost:5434/org_a_telco",
+        "query": "SELECT \"MonthlyCharges\", \"TotalCharges\", \"tenure\" as tenure_months, \"Churn\" as churn_status, \"Contract\" FROM customer_churn WHERE \"TotalCharges\" IS NOT NULL",
+        "post_processing": "dummies_contract"
+    },
+    "Org B (Supply Chain)": {
+        "connection_string": "postgresql://admin:password@localhost:5433/org_b_supply",
+        "query": "SELECT date, SUM(quantity) as total_quantity, AVG(\"priceMin\") as avg_price_min, AVG(\"priceMax\") as avg_price_max, AVG(\"priceMod\") as modal_price FROM wholesale_supply WHERE date IS NOT NULL GROUP BY date ORDER BY date",
+        "post_processing": "none"
+    },
+    "Org C (Global Superstore)": {
+        "connection_string": "postgresql://admin:password@localhost:5435/org_c_superstore",
+        "query": "SELECT Order_Date as date, Sales as total_sales, Profit as profit, Discount as discount FROM superstore_sales WHERE Order_Date IS NOT NULL",
+        "post_processing": "none"
+    }
+}
