@@ -6,7 +6,7 @@ class DBConnector:
     DB Connector Layer: Connects to isolated PostgreSQL servers based on Organization.
     """
     def __init__(self):
-        self.engine_a = create_engine('postgresql://admin:password@localhost:5432/org_a_telco')
+        self.engine_a = create_engine('postgresql://admin:password@localhost:5434/org_a_telco')
         self.engine_b = create_engine('postgresql://admin:password@localhost:5433/org_b_supply')
         
     def fetch_org_data(self, org_id: str) -> pd.DataFrame:

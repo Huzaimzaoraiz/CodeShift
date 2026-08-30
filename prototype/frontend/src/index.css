@@ -1,0 +1,228 @@
+:root {
+    --bg-color: #0f172a;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --accent: #3b82f6;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    min-height: 100vh;
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+    padding: 2rem;
+    gap: 2rem;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.input-group label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+input, select {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.glow-btn {
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.glow-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+}
+
+.glow-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    margin-top: 0.5rem;
+}
+
+.query-section {
+    display: flex;
+    gap: 1rem;
+}
+
+.query-section input {
+    flex: 1;
+}
+
+.run-btn {
+    width: 150px;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+/* Loader */
+.loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--glass-border);
+    border-top: 4px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Flowchart Styles */
+.flowchart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.flow-step {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--glass-border);
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+    width: 300px;
+    text-align: center;
+}
+
+.flow-arrow {
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+}
+
+.active-step {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+    border-color: var(--accent);
+    color: white;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    transform: scale(1.05);
+}
+
+.logs p {
+    margin-bottom: 0.5rem;
+    color: #cbd5e1;
+}
+
+details {
+    margin-top: 1rem;
+    background: rgba(0,0,0,0.2);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+pre {
+    margin-top: 1rem;
+    white-space: pre-wrap;
+    font-size: 0.85rem;
+    color: #a7f3d0;
+}
+
+.rag-details pre {
+    color: #fde047;
+}
+
+.story-content {
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.telemetry {
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    background: rgba(0,0,0,0.2);
+    padding: 0.75rem;
+    border-radius: 8px;
+}

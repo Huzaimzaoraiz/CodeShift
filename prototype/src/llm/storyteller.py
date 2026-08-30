@@ -2,51 +2,101 @@ import time
 import json
 from typing import Dict, Any, Tuple
 from langchain_groq import ChatGroq
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 class LLMStoryteller:
-    def __init__(self, api_key: str, kpi_kb: Dict):
+    def __init__(self, api_key: str, kpi_kb: Dict, model_name: str):
         self.llm = ChatGroq(
             api_key=api_key,
-            model_name="llama3-8b-8192", 
+            model_name=model_name, 
             temperature=0.2
         )
+        self.active_model = model_name
         self.kpi_kb = kpi_kb
         
-    def schema_mapper(self, user_query: str, db_schema: Dict[str, str]) -> Dict[str, Any]:
-        """
-        Dynamically generates the KPI and drivers by inspecting the database schema.
-        """
-        prompt = f"""
-        You are a highly intelligent Data Architect AI.
-        A user has asked: "{user_query}"
+        # Build RAG Vector Store
+        self.rag_corpus = []
+        self.rag_keys = []
+        for kpi, data in self.kpi_kb.items():
+            if kpi == 'business_levers': continue
+            doc = f"KPI: {kpi}. Description: {data.get('description', '')}. Drivers: {', '.join(data.get('causal_drivers', []))}."
+            self.rag_corpus.append(doc)
+            self.rag_keys.append(kpi)
+            
+        self.vectorizer = TfidfVectorizer()
+        if self.rag_corpus:
+            self.rag_vectors = self.vectorizer.fit_transform(self.rag_corpus)
+            
+    def retrieve_context(self, query: str) -> Dict[str, Any]:
+        """Performs RAG: Semantic search over the knowledge base."""
+        if not self.rag_corpus:
+            return {}
+        query_vec = self.vectorizer.transform([query])
+        similarities = cosine_similarity(query_vec, self.rag_vectors).flatten()
+        best_idx = similarities.argmax()
         
-        The database returned the following schema (columns and data types):
-        {json.dumps(db_schema, indent=2)}
+        # Return the most relevant KPI context if similarity is > 0
+        if similarities[best_idx] > 0.0:
+            best_kpi = self.rag_keys[best_idx]
+            return {best_kpi: self.kpi_kb[best_kpi]}
+        return self.kpi_kb # Fallback to all if no match
+
+    def schema_mapper(self, user_query: str, db_schema: Dict[str, str]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """Maps user intent and raw schema to KPI and drivers using LLM + RAG."""
         
-        Analyze the schema and the user's intent. Determine:
-        1. Which column is the target KPI to analyze?
-        2. Which columns are the causal drivers (features) that impact this KPI? Do not include the KPI or 'date'/'id' columns.
+        # [RAG STEP] Retrieve context
+        retrieved_context = self.retrieve_context(user_query)
         
-        Output ONLY a valid JSON object in this exact format:
-        {{
-            "kpi": "column_name",
-            "drivers": ["driver1", "driver2"]
-        }}
-        """
-        response = self.llm.invoke(prompt)
+        prompt = PromptTemplate(
+            input_variables=["query", "schema", "kpi_context"],
+            template='''
+            You are an expert Data Architect.
+            User Query: {query}
+            
+            Retrieved Business Context (RAG):
+            {kpi_context}
+            
+            The database returned the following schema (columns and data types):
+            {schema}
+            
+            Analyze the schema and the user's intent. Determine:
+            1. Which column is the target KPI to analyze?
+            2. Which columns are the causal drivers (features) that impact this KPI? Do not include the KPI or 'date'/'id' columns.
+            
+            Output ONLY a valid JSON object in this exact format:
+            {{
+                "kpi": "column_name",
+                "drivers": ["driver1", "driver2"]
+            }}
+            '''
+        )
         
-        # Clean the response to parse JSON
+        chain = prompt | self.llm
+        response = chain.invoke({
+            "query": user_query,
+            "schema": json.dumps(db_schema, indent=2),
+            "kpi_context": json.dumps(retrieved_context, indent=2)
+        })
+        
+        # Models like DeepSeek-R1 output <think> blocks which ruin JSON parsers
+        import re
         content = response.content.strip()
-        if "```json" in content:
-            content = content.split("```json")[1].split("```")[0].strip()
-        elif "```" in content:
-            content = content.split("```")[1].strip()
+        content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
+        
+        # Extract everything from the first { to the last }
+        start_idx = content.find('{')
+        end_idx = content.rfind('}')
+        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+            content = content[start_idx:end_idx+1]
             
         try:
-            return json.loads(content)
+            mapping = json.loads(content)
         except json.JSONDecodeError:
             raise ValueError(f"LLM failed to return valid JSON. Output: {content}")
+            
+        return mapping, retrieved_context
 
     def confidence_scorer(self, evidence_graph: Dict[str, Any]) -> Tuple[bool, float]:
         if evidence_graph['status'] != 'anomaly_detected':
@@ -84,7 +134,7 @@ class LLMStoryteller:
             )
 
         top_driver = evidence_graph['top_driver']
-        lever_data = self.kpi_kb['business_levers'].get(top_driver, {})
+        lever_data = self.kpi_kb.get('business_levers', {}).get(top_driver, {})
 
         template = """
         You are an Enterprise AI BI Analyst speaking to a {persona}.

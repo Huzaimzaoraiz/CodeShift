@@ -2,8 +2,10 @@ streamlit
 pandas
 numpy
 scikit-learn
-langchain
+fastapi
+uvicorn
 langchain-groq
+langchain
 python-dotenv
 SQLAlchemy
 psycopg2-binary
