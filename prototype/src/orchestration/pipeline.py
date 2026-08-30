@@ -4,10 +4,9 @@ from src.engine.ml_models import MLEngine
 from src.engine.rules import StatisticalRules
 
 class OrchestratorPipeline:
-    def __init__(self, kpi_kb: Dict):
-        self.kpi_kb = kpi_kb
+    def __init__(self):
         self.ml_engine = MLEngine()
-        self.rules = StatisticalRules(kpi_kb)
+        self.rules = StatisticalRules()
         
     def run_analysis(self, df: pd.DataFrame, kpi_name: str, drivers: list) -> Dict[str, Any]:
         

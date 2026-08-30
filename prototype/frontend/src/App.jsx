@@ -9,6 +9,31 @@ function App() {
   const [results, setResults] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [feedbackStatus, setFeedbackStatus] = useState('');
+  const [jwtToken, setJwtToken] = useState('');
+  const [role, setRole] = useState('');
+  
+  const [databases, setDatabases] = useState([]);
+  const [showAddDb, setShowAddDb] = useState(false);
+  const [newDb, setNewDb] = useState({ org_name: '', connection_string: '', query: '' });
+
+  useEffect(() => {
+    fetchDatabases();
+  }, []);
+
+  const fetchDatabases = async () => {
+    try {
+      const res = await fetch('http://localhost:8000/api/databases');
+      const data = await res.json();
+      setDatabases(data.databases || []);
+      if (data.databases && data.databases.length > 0 && !orgId) {
+        setOrgId(data.databases[0]);
+      }
+    } catch (err) {
+      console.error("Error fetching databases:", err);
+    }
+  };
 
   const fetchModels = async () => {
     try {
@@ -24,15 +49,66 @@ function App() {
     }
   };
 
+  const loginPersona = async (selectedRole) => {
+    setRole(selectedRole);
+    if (!selectedRole) {
+      setJwtToken('');
+      return;
+    }
+    try {
+      const res = await fetch('http://localhost:8000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: selectedRole })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setJwtToken(data.access_token);
+      } else {
+        alert(data.detail || "Login failed");
+      }
+    } catch (err) {
+      alert("Error logging in: " + err.message);
+    }
+  };
+
+  const addDatabase = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('http://localhost:8000/api/databases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newDb)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message);
+        setShowAddDb(false);
+        setNewDb({ org_name: '', connection_string: '', query: '' });
+        fetchDatabases();
+      } else {
+        alert("Failed to add database: " + data.detail);
+      }
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  };
+
   const runPipeline = async () => {
     if (!selectedModel) {
       alert("Please fetch/select a model first.");
+      return;
+    }
+    if (!jwtToken) {
+      alert("Please select a Persona (Login) first.");
       return;
     }
     
     setStatus('loading');
     setResults(null);
     setErrorMsg('');
+    setFeedback('');
+    setFeedbackStatus('');
     setActiveStep(1);
 
     // Flowchart Animation Loop
@@ -43,7 +119,10 @@ function App() {
     try {
       const res = await fetch('http://localhost:8000/api/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        },
         body: JSON.stringify({ query, org_id: orgId, model: selectedModel })
       });
       
@@ -61,6 +140,27 @@ function App() {
     }
   };
 
+  const submitFeedback = async () => {
+    if (!feedback) return;
+    try {
+      setFeedbackStatus('Submitting...');
+      const res = await fetch('http://localhost:8000/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kpi: results.mapped_kpi, correction: feedback, user_id: 'user_123' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setFeedbackStatus('✅ Feedback Loop Active! Model logic tuning queued.');
+        setFeedback('');
+      } else {
+        setFeedbackStatus('❌ Error submitting feedback.');
+      }
+    } catch (err) {
+      setFeedbackStatus('❌ Error submitting feedback.');
+    }
+  };
+
   const statusTexts = [
     "Initializing...",
     "Running Vector Search (TF-IDF)...",
@@ -75,6 +175,16 @@ function App() {
       <aside className="glass-panel sidebar">
         <h2>⚙️ Control Panel</h2>
         
+        <div className="input-group" style={{ marginBottom: '20px', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+          <label>👤 Authenticate Persona</label>
+          <select value={role} onChange={e => loginPersona(e.target.value)}>
+            <option value="">-- Select Persona to Login --</option>
+            <option value="cmo">Chief Marketing Officer (Full Access)</option>
+            <option value="analyst">Data Analyst (Restricted Financials)</option>
+          </select>
+          {jwtToken && <small style={{ color: '#4ade80' }}>✓ JWT Token Secured</small>}
+        </div>
+
         <button onClick={fetchModels} className="glow-btn">
           Connect Backend & Fetch Models
         </button>
@@ -91,11 +201,47 @@ function App() {
 
         <div className="input-group">
           <label>🏢 Select Organization</label>
-          <select value={orgId} onChange={e => setOrgId(e.target.value)}>
-            <option value="Org A (Telecommunications)">Org A (Telecommunications)</option>
-            <option value="Org B (Supply Chain)">Org B (Supply Chain)</option>
-          </select>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <select value={orgId} onChange={e => setOrgId(e.target.value)} style={{ flex: 1 }}>
+              {databases.map(db => (
+                <option key={db} value={db}>{db}</option>
+              ))}
+            </select>
+            <button onClick={() => setShowAddDb(!showAddDb)} className="icon-btn" title="Add New Database">
+              ➕
+            </button>
+          </div>
         </div>
+
+        {showAddDb && (
+          <form onSubmit={addDatabase} className="input-group add-db-form" style={{ padding: '15px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', marginBottom: '20px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: '#4ade80' }}>Add Database</h4>
+            <input 
+              type="text" 
+              placeholder="Organization Name" 
+              required
+              value={newDb.org_name}
+              onChange={e => setNewDb({...newDb, org_name: e.target.value})}
+              style={{ marginBottom: '10px', width: '100%' }}
+            />
+            <input 
+              type="text" 
+              placeholder="Connection String (e.g. postgresql://...)" 
+              required
+              value={newDb.connection_string}
+              onChange={e => setNewDb({...newDb, connection_string: e.target.value})}
+              style={{ marginBottom: '10px', width: '100%' }}
+            />
+            <textarea 
+              placeholder="SQL Query to fetch data" 
+              required
+              value={newDb.query}
+              onChange={e => setNewDb({...newDb, query: e.target.value})}
+              style={{ marginBottom: '10px', width: '100%', height: '80px', resize: 'vertical' }}
+            />
+            <button type="submit" className="glow-btn" style={{ padding: '8px' }}>Save Database</button>
+          </form>
+        )}
       </aside>
 
       {/* Main Content */}
@@ -168,16 +314,37 @@ function App() {
 
             <div className="glass-panel narrative-panel">
               <h3>📄 Action Narrative</h3>
-              <div 
-                className="story-content" 
-                dangerouslySetInnerHTML={{ 
-                  __html: results.story.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>') 
-                }} 
-              />
+              <div className="story-content">
+                {results.story.status === "Complete" ? (
+                  <>
+                    <p><strong>🚨 Finding:</strong> {results.story.change_detection}</p>
+                    <p><strong>🧠 Contributing Factors:</strong> {results.story.contributing_factors}</p>
+                    <p><strong>🎯 Action Plan:</strong> {results.story.recommended_actions}</p>
+                  </>
+                ) : (
+                  <p>{results.story.change_detection}</p>
+                )}
+              </div>
               <div className="telemetry">
                 <span>Latency: {results.telemetry.latency_ms} ms</span> | 
                 <span> Tokens: {results.telemetry.tokens || 'N/A'}</span> | 
                 <span> Cost: ${results.telemetry.cost_usd.toFixed(5)}</span>
+              </div>
+              
+              <div className="feedback-section" style={{ marginTop: '20px', padding: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <h4>🔄 Human Feedback Loop</h4>
+                <p style={{ fontSize: '0.85em', color: '#aaa', marginBottom: '10px' }}>Notice a hallucination or incorrect root cause? Correct the AI to tune its Knowledge Base.</p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input 
+                    type="text" 
+                    value={feedback} 
+                    onChange={e => setFeedback(e.target.value)} 
+                    placeholder="e.g., Actually, this churn spike was due to a billing error..."
+                    style={{ flex: 1 }}
+                  />
+                  <button onClick={submitFeedback} className="glow-btn">Submit Correction</button>
+                </div>
+                {feedbackStatus && <p style={{ fontSize: '0.9em', color: '#4ade80', marginTop: '10px' }}>{feedbackStatus}</p>}
               </div>
             </div>
           </div>
