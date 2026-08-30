@@ -1,0 +1,40 @@
+{
+    "kpis": {
+        "revenue": {
+            "description": "Total daily revenue from taxi fares",
+            "thresholds": {
+                "material_drop_percentage": 0.15
+            },
+            "drivers": ["total_distance", "total_passengers", "average_tip"],
+            "org": "Org A (Taxi)"
+        },
+        "total_passengers": {
+            "description": "Total monthly airline passengers",
+            "thresholds": {
+                "material_drop_percentage": 0.10
+            },
+            "drivers": ["year", "month_num"],
+            "org": "Org B (Airlines)"
+        }
+    },
+    "business_levers": {
+        "total_distance": {
+            "lever": "Driver Dispatch Algorithm",
+            "action": "Prioritize long-distance trips from airports",
+            "owner": "Operations Team",
+            "expected_impact": "Increase total distance and fare revenue by 10%"
+        },
+        "total_passengers": {
+            "lever": "Marketing Campaign",
+            "action": "Run holiday discount promos",
+            "owner": "Marketing Team",
+            "expected_impact": "Boost passenger volume by 5%"
+        },
+        "average_tip": {
+            "lever": "In-App UI",
+            "action": "Change default tip percentages to 18%, 20%, 22%",
+            "owner": "Product Team",
+            "expected_impact": "Increase average tip and overall revenue"
+        }
+    }
+}

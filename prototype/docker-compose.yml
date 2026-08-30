@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  postgres_org_a:
+    image: postgres:15
+    container_name: postgres_org_a
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: org_a_taxi
+    ports:
+      - "5432:5432"
+    volumes:
+      - org_a_data:/var/lib/postgresql/data
+
+  postgres_org_b:
+    image: postgres:15
+    container_name: postgres_org_b
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: org_b_airlines
+    ports:
+      - "5433:5432"
+    volumes:
+      - org_b_data:/var/lib/postgresql/data
+
+volumes:
+  org_a_data:
+  org_b_data:
