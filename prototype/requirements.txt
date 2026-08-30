@@ -1,0 +1,9 @@
+streamlit
+pandas
+numpy
+scikit-learn
+langchain
+langchain-groq
+python-dotenv
+SQLAlchemy
+psycopg2-binary

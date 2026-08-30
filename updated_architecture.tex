@@ -1,0 +1,141 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc}
+
+\begin{document}
+\begin{tikzpicture}[
+    auto,
+    node distance=1.5cm and 2cm,
+    base/.style={draw, align=center, minimum height=1cm, minimum width=3cm, font=\sffamily\small, rounded corners},
+    llm/.style={base, fill=pink!30, draw=purple, thick},
+    data/.style={base, fill=blue!10, draw=blue!70, thick},
+    logic/.style={base, fill=green!10, draw=green!60!black, thick},
+    newfeat/.style={base, fill=orange!20, draw=orange, dashed, thick},
+    arrow/.style={-{Stealth[length=2.5mm, width=2.5mm]}, thick, draw=black!70},
+    darrow/.style={-{Stealth[length=2.5mm, width=2.5mm]}, dashed, thick, draw=orange}
+]
+
+% =====================
+% Nodes
+% =====================
+
+% Security & Context
+\node[newfeat] (session) {User Session};
+\node[newfeat, below left=1cm and 0.5cm of session] (persona) {Persona\\(e.g., CMO, Analyst)};
+\node[newfeat, below right=1cm and 0.5cm of session] (entitlements) {Data Entitlements\\(Row/Column RBAC)};
+
+% Data Sources
+\node[data, right=3.5cm of session] (db) {Company Database\\(Postgres/Snowflake)};
+\node[data, right=1.5cm of db] (unstructured) {Unstructured Data\\(Reviews/Tickets)};
+
+% Pipeline
+\node[logic, below=1.5cm of db] (dbconn) {DB Connector Layer\\(Read-only)};
+\node[logic, below=1cm of dbconn] (schemaintro) {Schema Introspector};
+\node[llm, below=1cm of schemaintro] (schemamap) {Schema Mapper\\(LLM)};
+
+% Metadata
+\node[newfeat, left=1.5cm of schemamap] (kpikb) {Enhanced KPI\\Knowledge Base\\(Defs, Thresholds, Lineage)};
+
+\node[logic, below=1cm of schemamap] (kpicheck) {KPI Computability\\Check};
+
+% Quantitative Logic Ensemble
+\node[logic, below=1.5cm of kpicheck] (causalml) {Causal ML\\(Drivers)};
+\node[logic, left=0.3cm of causalml] (timeseries) {Time-Series ML\\(Anomalies)};
+\node[logic, right=0.3cm of causalml] (statsrules) {Stat Rules\\(Thresholds)};
+
+% Evidence Graph
+\node[data, circle, inner sep=0pt, minimum size=3cm, below=1.5cm of causalml] (evgraph) {Evidence\\Graph};
+
+% Reasoning
+\node[llm, below=1.5cm of evgraph] (reasoner) {Reasoning Model\\(LLM)};
+\node[newfeat, diamond, aspect=2, inner sep=2pt, below=1cm of reasoner] (confscorer) {Confidence\\Scorer};
+
+% Outputs / Next Steps
+\node[newfeat, left=2cm of confscorer] (abstain) {Abstention /\\Clarification Request};
+\node[llm, right=2cm of confscorer] (storygen) {Story Generator\\(LLM)};
+
+\node[data, below left=1.5cm and 0cm of storygen] (changedetect) {Change\\Detection};
+\node[data, below=1.5cm of storygen] (factors) {Contributing\\Factors};
+\node[data, below right=1.5cm and 0cm of storygen] (actions) {Recommended Actions\\(Levers \& Impact)};
+
+% Telemetry
+\node[newfeat, right=4cm of reasoner] (telemetry) {Telemetry Logger\\(Latency, Tokens, Cost)};
+
+% =====================
+% Edges
+% =====================
+
+% Context edges
+\draw[arrow] (session) -- (persona);
+\draw[arrow] (session) -- (entitlements);
+
+% Pipeline edges
+\draw[arrow] (db) -- (dbconn);
+\draw[arrow] (dbconn) -- (schemaintro);
+\draw[arrow] (schemaintro) -- (schemamap);
+
+\draw[arrow] (kpikb) -- (schemamap);
+\draw[arrow] (schemamap) -- (kpicheck);
+
+% Feeds to ensemble
+\draw[arrow] (kpicheck) -- (causalml);
+\draw[arrow] (kpicheck) -| (timeseries);
+\draw[arrow] (kpicheck) -| (statsrules);
+
+% Data ingestion to engine
+\draw[arrow] (unstructured) |- (statsrules);
+\draw[arrow] (entitlements) |- node[above left, pos=0.8, font=\sffamily\footnotesize] {Filters} (statsrules);
+
+% Ensemble feeds together into Evidence Graph
+\draw[arrow] (timeseries) -- (evgraph);
+\draw[arrow] (causalml) -- (evgraph);
+\draw[arrow] (statsrules) -- (evgraph);
+\draw[arrow] (evgraph) -- (reasoner);
+\draw[arrow] (reasoner) -- (confscorer);
+
+% Confidence branching
+\draw[arrow] (confscorer) -- node[above, font=\sffamily\footnotesize] {Low Confidence} (abstain);
+\draw[arrow] (confscorer) -- node[above, font=\sffamily\footnotesize] {High Confidence} (storygen);
+
+% Persona influence
+\draw[arrow] (persona) |- node[near end, left, font=\sffamily\footnotesize] {Dictates Tone} (storygen);
+
+% Output edges
+\draw[arrow] (storygen) -- (changedetect);
+\draw[arrow] (storygen) -- (factors);
+\draw[arrow] (storygen) -- (actions);
+
+% Feedback Loop Node & Edges
+\node[newfeat, below=1cm of factors] (feedback) {Human Feedback \&\\Correction Loop};
+\draw[arrow] (changedetect) |- (feedback);
+\draw[arrow] (factors) -- (feedback);
+\draw[arrow] (actions) |- (feedback);
+
+% Feedback connections back to system
+\draw[darrow, rounded corners] (feedback.west) -- ++(-9, 0) node[midway, below, font=\sffamily\footnotesize] {Updates Rules \& Thresholds} |- (kpikb.west);
+\draw[darrow, rounded corners] (feedback.east) -- ++(1.5, 0) node[midway, below, font=\sffamily\footnotesize] {Few-shot Tuning} |- (reasoner.east);
+
+% Telemetry edges
+\draw[darrow] (schemamap) -| (telemetry);
+\draw[darrow] (reasoner) -- (telemetry);
+\draw[darrow] (storygen) -| (telemetry);
+
+% =====================
+% Background Groupings
+% =====================
+\begin{scope}[on background layer]
+    % ML Ensemble grouping
+    \node[fill=green!5, draw=green!40, dashed, thick, rounded corners, inner sep=0.3cm, fit=(timeseries) (causalml) (statsrules)] (mlensemble) {};
+    \node[below=0.1cm of mlensemble, font=\sffamily\bfseries\footnotesize, text=green!50!black, fill=white, inner sep=2pt] {Quantitative Logic Ensemble (Small Models)};
+
+    % Security grouping
+    \node[fill=gray!10, rounded corners, inner sep=0.5cm, fit=(session) (persona) (entitlements)] (bgcontext) {};
+    \node[above=0cm of bgcontext, font=\sffamily\bfseries] {Context \& Security};
+    
+    % Data grouping
+    \node[fill=blue!5, rounded corners, inner sep=0.5cm, fit=(db) (unstructured)] (bgdata) {};
+    \node[above=0cm of bgdata, font=\sffamily\bfseries] {Data Sources};
+\end{scope}
+
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,9 @@
+week_start,region,marketing_spend,ad_clicks,campaign_status
+2023-09-25,North America,15000,16500,Active
+2023-10-02,North America,15200,16700,Active
+2023-10-09,North America,3000,3200,Paused
+2023-10-16,North America,3100,3300,Paused
+2023-09-25,EMEA,8000,8500,Active
+2023-10-02,EMEA,8100,8600,Active
+2023-10-09,EMEA,8050,8550,Active
+2023-10-16,EMEA,8200,8700,Active
